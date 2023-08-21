@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "jpeg-pyopengl-filter-prototype"
+version = "0.1.0"
+description = ""
+authors = ["Yusuke Kawamoto <novogrammer@gmail.com>"]
+readme = "README.md"
+packages = [{include = "jpeg_pyopengl_filter_prototype"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
