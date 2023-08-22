@@ -12,6 +12,8 @@ pyopengl = "^3.1.7"
 pillow = "^10.0.0"
 pygame = "^2.5.1"
 numpy = "^1.25.2"
+python-dotenv = "^1.0.0"
+opencv-python = "^4.8.0.76"
 
 
 [build-system]

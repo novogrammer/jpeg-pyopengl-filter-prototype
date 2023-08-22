@@ -1,0 +1,4 @@
+received_image_*.jpg
+.env
+__pycache__
+poetry.lock
