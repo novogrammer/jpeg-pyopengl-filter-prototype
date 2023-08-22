@@ -6,9 +6,9 @@ from typing import Callable, TypedDict
 from dotenv import load_dotenv
 
 from image_transfer import receive_image, send_image
-import time
 import io
 from PIL import Image
+from my_timer import MyTimer
 
 class ImageMessage(TypedDict):
   jpeg_image: bytes
@@ -98,22 +98,19 @@ def run(callback:Callable[[Image.Image],Image.Image]|Callable[[],None]):
       received_image_message=received_image_queue.get(False)
       received_data=received_image_message["jpeg_image"]
 
-      time_begin=time.perf_counter()
+      with MyTimer("total"):
 
-      image_before = Image.open(io.BytesIO(received_data))
+        image_before = Image.open(io.BytesIO(received_data))
 
-      image_after=callback(image_before)
-      image_after = image_after.convert("RGB")
+        image_after=callback(image_before)
+        image_after = image_after.convert("RGB")
 
-      print("Filtered.")
+        print("Filtered.")
 
-      output_buffer = io.BytesIO()
-      image_after.save(output_buffer, format="JPEG")
-
-      time_end=time.perf_counter()
+        output_buffer = io.BytesIO()
+        image_after.save(output_buffer, format="JPEG")
 
       print("Encoded.")
-      print(f"process time: {time_end-time_begin}")
       sending_data=output_buffer.getvalue()
       sending_image_queue.put(
         ImageMessage(jpeg_image=sending_data)
