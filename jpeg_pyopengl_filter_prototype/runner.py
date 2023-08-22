@@ -14,7 +14,7 @@ class ImageMessage(TypedDict):
   jpeg_image: bytes
 
 
-def run(callback:Callable[[Image.Image],Image.Image]):
+def run(callback:Callable[[Image.Image],Image.Image]|Callable[[],None]):
   load_dotenv()
 
   MY_IP=os.getenv("FILTER_MY_IP","127.0.0.1")
@@ -121,6 +121,7 @@ def run(callback:Callable[[Image.Image],Image.Image]):
 
     except Empty:
       pass
+    callback(None)
 
 
 

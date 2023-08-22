@@ -14,6 +14,7 @@ MY_PORT=int(os.getenv("FILTER_MY_PORT","5000"))
 FROM_FILE=bool(int(os.getenv("SENDER_FROM_FILE","1")))
 JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
 IMAGE_WIDTH=int(os.getenv("SENDER_IMAGE_WIDTH","480"))
+IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
 FPS=int(os.getenv("SENDER_FPS","30"))
 SPF=1/FPS
 
@@ -22,6 +23,7 @@ print(f"MY_PORT: {MY_PORT}")
 print(f"FROM_FILE: {FROM_FILE}")
 print(f"JPEG_QUALITY: {JPEG_QUALITY}")
 print(f"IMAGE_WIDTH: {IMAGE_WIDTH}")
+print(f"IMAGE_HEIGHT: {IMAGE_HEIGHT}")
 print(f"FPS: {FPS}")
 
 
@@ -46,7 +48,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
       if not result_read:
         print("not result_read")
         continue
-      resized_frame=cv2.resize(frame, (IMAGE_WIDTH,int(IMAGE_WIDTH / frame_width * frame_height)))
+      resized_frame=cv2.resize(frame, (IMAGE_WIDTH,IMAGE_HEIGHT))
       result_encode,encoded=cv2.imencode(".jpg", resized_frame, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
       if not result_encode:
         print("not result_encode")

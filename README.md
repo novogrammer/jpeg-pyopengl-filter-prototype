@@ -1,6 +1,9 @@
 # JPEGフィルターのプロトタイプ、pyopengl版
 単純にJPEGを受け取り、フィルターをかけ、JPEGを送信する。
 
+OpenCVで試してたがOpenGLのシェーダーでも試したくなった。
+https://github.com/novogrammer/jpeg-filter-prototype
+
 ## 環境構築
 poetryをインストールしておく
 
@@ -24,8 +27,9 @@ FILTER_JPEG_QUALITY="80"
 
 # sender.pyでファイルから読み込むか？
 SENDER_FROM_FILE="1"
-# sender.pyの画像幅
+# sender.pyの画像サイズ
 SENDER_IMAGE_WIDTH="480"
+SENDER_IMAGE_HEIGHT="270"
 # sender.pyのFPS
 SENDER_FPS="30"
 
@@ -42,9 +46,9 @@ RECEIVER_TO_FILE="1"
 poetry run python ./jpeg_filter_prototype/receiver.py
 ```
 
-fooの場合
+invertの場合
 ```
-poetry run python ./jpeg_filter_prototype/filter_foo.py
+poetry run python ./jpeg_filter_prototype/filter_invert.py
 ```
 
 ```
