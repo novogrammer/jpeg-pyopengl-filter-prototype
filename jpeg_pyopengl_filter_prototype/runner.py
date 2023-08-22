@@ -18,12 +18,12 @@ def run(callback:Callable[[Image.Image],Image.Image]|Callable[[],None]):
   load_dotenv()
 
   MY_IP=os.getenv("FILTER_MY_IP","127.0.0.1")
-  MY_PORT=int(os.getenv("FILTER_MY_PORT","5000"))
+  MY_PORT=int(os.getenv("FILTER_MY_PORT","5005"))
   print(f"MY_IP: {MY_IP}")
   print(f"MY_PORT: {MY_PORT}")
 
   YOUR_IP=os.getenv("FILTER_YOUR_IP","127.0.0.1")
-  YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5000"))
+  YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5006"))
   print(f"YOUR_IP: {YOUR_IP}")
   print(f"YOUR_PORT: {YOUR_PORT}")
 

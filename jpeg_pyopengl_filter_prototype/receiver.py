@@ -8,7 +8,7 @@ load_dotenv()
 
 
 YOUR_IP=os.getenv("FILTER_YOUR_IP","127.0.0.1")
-YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5000"))
+YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5006"))
 TO_FILE=bool(int(os.getenv("RECEIVER_TO_FILE","1")))
 
 print(f"YOUR_IP: {YOUR_IP}")
