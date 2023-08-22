@@ -37,6 +37,9 @@ IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
 
 
 class FilterInvert():
+  vertex_shader:GLuint
+  fragment_shader:GLuint
+  program:GLuint
   def __init__(self):
     # Initialize pygame and OpenGL
     pygame.init()
