@@ -8,12 +8,12 @@ packages = [{include = "jpeg_pyopengl_filter_prototype"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pyopengl = "^3.1.7"
 pillow = "^10.0.0"
 pygame = "^2.5.1"
 numpy = "^1.25.2"
 python-dotenv = "^1.0.0"
 opencv-python = "^4.8.0.76"
+pyopengl = "3.1.1a1"
 
 
 [build-system]
