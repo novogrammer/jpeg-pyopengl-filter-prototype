@@ -17,12 +17,12 @@ def apply_invert_filter(input_jpeg_binary):
 
   
   # Load the image from binary
-  # image = Image.open(io.BytesIO(input_jpeg_binary))
-  # width, height = image.size
-  image = pygame.image.load(io.BytesIO(input_jpeg_binary),"input_from_binary.jpg")
-  width=image.get_width()
-  height=image.get_height()
-  image_data = pygame.image.tostring(image, "RGBA", 1)
+
+  image = Image.open(io.BytesIO(input_jpeg_binary))
+  image=image.convert("RGBA")
+  width=image.width
+  height=image.height
+  image_data = image.tobytes()
   
   # Initialize pygame and OpenGL
   pygame.init()
@@ -85,10 +85,10 @@ def apply_invert_filter(input_jpeg_binary):
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
   glBindTexture(GL_TEXTURE_2D, texture)
   glBegin(GL_QUADS)
-  glTexCoord2f(0, 1); glVertex2f(-1, -1)
-  glTexCoord2f(1, 1); glVertex2f(1, -1)
-  glTexCoord2f(1, 0); glVertex2f(1, 1)
-  glTexCoord2f(0, 0); glVertex2f(-1, 1)
+  glTexCoord2f(0, 0); glVertex2f(-1, -1)
+  glTexCoord2f(1, 0); glVertex2f(1, -1)
+  glTexCoord2f(1, 1); glVertex2f(1, 1)
+  glTexCoord2f(0, 1); glVertex2f(-1, 1)
   glEnd()
   
   # Read the rendered image
