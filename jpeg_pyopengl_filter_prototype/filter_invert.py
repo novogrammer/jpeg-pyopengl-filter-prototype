@@ -17,7 +17,6 @@ import sys
 from my_timer import MyTimer
 
 
-# Vertex shader
 vertex_code = """
 void main(void) {
     gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
@@ -25,7 +24,6 @@ void main(void) {
 }
 """
 
-# Fragment shader for inversion
 fragment_code = """
 uniform sampler2D texture;
 void main(void) {
@@ -39,40 +37,37 @@ IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
 
 
 class FilterInvert():
-  vertex_shader:GLuint
-  fragment_shader:GLuint
   program:GLuint
   texture:GLuint
   def __init__(self):
     with MyTimer('FilterInvert.__init__()'):
-      # Initialize pygame and OpenGL
       pygame.init()
       pygame.display.set_mode((IMAGE_WIDTH, IMAGE_HEIGHT), pygame.DOUBLEBUF | pygame.OPENGL)
 
-      # Compile shaders
-      self.vertex_shader = load_shader(GL_VERTEX_SHADER, vertex_code)
-      self.fragment_shader = load_shader(GL_FRAGMENT_SHADER, fragment_code)
+      vertex_shader = load_shader(GL_VERTEX_SHADER, vertex_code)
+      fragment_shader = load_shader(GL_FRAGMENT_SHADER, fragment_code)
 
-      # Create shader program
       self.program = glCreateProgram()
-      glAttachShader(self.program, self.vertex_shader)
-      glAttachShader(self.program, self.fragment_shader)
+      glAttachShader(self.program, vertex_shader)
+      glAttachShader(self.program, fragment_shader)
       glLinkProgram(self.program)
 
-      # Create texture
+      glDeleteShader(vertex_shader)
+      glDeleteShader(fragment_shader)
+
       self.texture = glGenTextures(1)
       glBindTexture(GL_TEXTURE_2D, self.texture)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
   def __del__(self):
+    pygame.quit()
     pass
-    
   def __call__(self,image_before:Optional[Image.Image]=None) -> Image.Image|None:
 
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
-        pygame.quit()
+        # SystemExit例外が発生する
         sys.exit()
     if not image_before:
       return
@@ -92,7 +87,6 @@ class FilterInvert():
       with MyTimer('glUseProgram(self.program)'):
         glUseProgram(self.program)
 
-      # Render the image with the invert filter
       # glClearColor(1.0, 0.0, 0.0, 1.0)  # 赤色でクリア
       with MyTimer('glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)'):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -106,7 +100,6 @@ class FilterInvert():
         glEnd()
 
 
-      # Read the rendered image
       with MyTimer('rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)'):
         rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)
       with MyTimer('image_after = Image.frombytes("RGB", (width, height), rendered_data)'):

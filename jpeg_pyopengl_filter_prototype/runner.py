@@ -95,29 +95,31 @@ def run(callback:Callable[[Image.Image],Image.Image]|Callable[[],None]):
   while True:
 
     try:
-      received_image_message=received_image_queue.get(False)
-      received_data=received_image_message["jpeg_image"]
+      try:
+        received_image_message=received_image_queue.get(False)
+        received_data=received_image_message["jpeg_image"]
 
-      with MyTimer("total"):
+        with MyTimer("total"):
 
-        image_before = Image.open(io.BytesIO(received_data))
+          image_before = Image.open(io.BytesIO(received_data))
 
-        image_after=callback(image_before)
+          image_after=callback(image_before)
 
-        print("Filtered.")
+          print("Filtered.")
 
-        output_buffer = io.BytesIO()
-        image_after.save(output_buffer, format="JPEG")
+          output_buffer = io.BytesIO()
+          image_after.save(output_buffer, format="JPEG")
 
-      print("Encoded.")
-      sending_data=output_buffer.getvalue()
-      sending_image_queue.put(
-        ImageMessage(jpeg_image=sending_data)
-      )
-
-    except Empty:
-      pass
-    callback(None)
+        print("Encoded.")
+        sending_data=output_buffer.getvalue()
+        sending_image_queue.put(
+          ImageMessage(jpeg_image=sending_data)
+        )
+      except Empty:
+        pass
+      callback(None)
+    except SystemError:
+      break
 
 
 
