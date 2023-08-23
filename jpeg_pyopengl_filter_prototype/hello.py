@@ -28,22 +28,6 @@ def apply_invert_filter(input_jpeg_binary):
   pygame.init()
   pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL)
 
-  depth_buffer_obj = glGenRenderbuffers(1)
-  glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_obj)
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height)
-
-  color_buffer_obj = glGenRenderbuffers(1)
-  glBindRenderbuffer(GL_RENDERBUFFER, color_buffer_obj)
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, width, height)
-
-  fb_obj = glGenFramebuffers(1)
-  glBindFramebuffer(GL_FRAMEBUFFER, fb_obj)
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_obj)
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_buffer_obj)
-
-  status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
-  if status != GL_FRAMEBUFFER_COMPLETE:
-      print("incomplete framebuffer object")
 
   # Create texture
   texture = glGenTextures(1)
