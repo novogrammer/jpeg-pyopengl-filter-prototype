@@ -56,6 +56,7 @@ IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
 class FilterInvert():
   program:GLuint
   texture:GLuint
+  pbo:GLuint
   def __init__(self):
     with MyTimer('FilterInvert.__init__()'):
       pygame.init()
@@ -84,6 +85,11 @@ class FilterInvert():
       glVertexPointer(3,GL_FLOAT,0,vertices)
       glTexCoordPointer(2,GL_FLOAT,0,coords)
 
+      self.pbo=glGenBuffers(1)
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER,self.pbo)
+      glBufferData(GL_PIXEL_UNPACK_BUFFER,IMAGE_WIDTH * IMAGE_HEIGHT * 3,None,GL_STREAM_DRAW)
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0)
+
 
   def __del__(self):
     pygame.quit()
@@ -103,11 +109,23 @@ class FilterInvert():
       width = image_before.width
       height = image_before.height
       with MyTimer('image_before.tobytes()'):
-        image_before_data = image_before.tobytes()
+        image_before_data:bytes = image_before.tobytes()
 
-      # テクスチャは選択済みと仮定する
-      with MyTimer('glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)'):
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)
+      # with MyTimer('glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)'):
+      #   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB
+      #   , width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)
+
+      with MyTimer('copy pbo'):
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,self.pbo)
+        pbo_addr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY)
+        ctypes.memmove(pbo_addr, image_before_data, IMAGE_WIDTH * IMAGE_HEIGHT * 3)
+        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER)
+        with MyTimer('glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, None)'):
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB
+          , width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, None)
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0)
+
+
 
       with MyTimer('glUseProgram(self.program)'):
         glUseProgram(self.program)
@@ -121,10 +139,18 @@ class FilterInvert():
         glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, indices)
 
 
+      glBindBuffer(GL_PIXEL_PACK_BUFFER, self.pbo)
       with MyTimer('rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)'):
-        rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE,ctypes.c_void_p(0))
+      pbo_addr=glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE)
+      rendered_data = ctypes.string_at(pbo_addr,IMAGE_WIDTH * IMAGE_HEIGHT * 3)
+        
       with MyTimer('image_after = Image.frombytes("RGB", (width, height), rendered_data)'):
         image_after = Image.frombytes("RGB", (width, height), rendered_data)
+      
+      glUnmapBuffer(GL_PIXEL_PACK_BUFFER)
+      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)
+
       with MyTimer('pygame.display.flip()'):
         pygame.display.flip()
       with MyTimer('image_after = ImageOps.flip(image_after)'):
