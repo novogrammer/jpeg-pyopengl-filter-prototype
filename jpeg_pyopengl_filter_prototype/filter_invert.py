@@ -115,7 +115,7 @@ class FilterInvert():
       #   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB
       #   , width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)
 
-      with MyTimer('copy pbo'):
+      with MyTimer('upload pbo'):
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER,self.pbo)
         pbo_addr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY)
         ctypes.memmove(pbo_addr, image_before_data, IMAGE_WIDTH * IMAGE_HEIGHT * 3)
@@ -139,17 +139,18 @@ class FilterInvert():
         glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, indices)
 
 
-      glBindBuffer(GL_PIXEL_PACK_BUFFER, self.pbo)
-      with MyTimer('rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)'):
-        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE,ctypes.c_void_p(0))
-      pbo_addr=glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE)
-      rendered_data = ctypes.string_at(pbo_addr,IMAGE_WIDTH * IMAGE_HEIGHT * 3)
+      with MyTimer('download pbo'):
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, self.pbo)
+        with MyTimer('rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)'):
+          glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE,ctypes.c_void_p(0))
+        pbo_addr=glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE)
+        rendered_data = ctypes.string_at(pbo_addr,IMAGE_WIDTH * IMAGE_HEIGHT * 3)
+          
+        with MyTimer('image_after = Image.frombytes("RGB", (width, height), rendered_data)'):
+          image_after = Image.frombytes("RGB", (width, height), rendered_data)
         
-      with MyTimer('image_after = Image.frombytes("RGB", (width, height), rendered_data)'):
-        image_after = Image.frombytes("RGB", (width, height), rendered_data)
-      
-      glUnmapBuffer(GL_PIXEL_PACK_BUFFER)
-      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER)
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)
 
       with MyTimer('pygame.display.flip()'):
         pygame.display.flip()
