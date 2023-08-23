@@ -11,4 +11,4 @@ class MyTimer():
   def __exit__(self, *args):
     self.end = time.perf_counter()
     name_str = f"'{self.name}' " if self.name else ""
-    print(f"{name_str}Elapsed time: {self.end - self.start:.4f} seconds")
+    print(f"{name_str}Elapsed time: {(self.end - self.start)*1000.0:.2f}[ms]")

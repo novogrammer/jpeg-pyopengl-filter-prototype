@@ -103,7 +103,6 @@ def run(callback:Callable[[Image.Image],Image.Image]|Callable[[],None]):
         image_before = Image.open(io.BytesIO(received_data))
 
         image_after=callback(image_before)
-        image_after = image_after.convert("RGB")
 
         print("Filtered.")
 
