@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from typing import Any,Optional
+from typing import Any,Optional,List
 from PIL import Image,ImageOps
 
 import pygame
@@ -15,6 +15,23 @@ from opengl_utils import load_shader
 import os
 import sys
 from my_timer import MyTimer
+
+vertices:List[float]=[
+  -1,-1,0,
+  +1,-1,0,
+  +1,+1,0,
+  -1,+1,0,
+]
+coords:List[float]=[
+  0,0,
+  1,0,
+  1,1,
+  0,1,
+]
+indices:List[int]=[
+  0,1,2,
+  0,2,3,
+]
 
 
 vertex_code = """
@@ -56,9 +73,17 @@ class FilterInvert():
       glDeleteShader(fragment_shader)
 
       self.texture = glGenTextures(1)
+      # 有効にしたままにする
       glBindTexture(GL_TEXTURE_2D, self.texture)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+      # 有効にしたままにする
+      glEnableClientState(GL_VERTEX_ARRAY)
+      glEnableClientState(GL_TEXTURE_COORD_ARRAY)
+      glVertexPointer(3,GL_FLOAT,0,vertices)
+      glTexCoordPointer(2,GL_FLOAT,0,coords)
+
 
   def __del__(self):
     pygame.quit()
@@ -91,13 +116,9 @@ class FilterInvert():
       with MyTimer('glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)'):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
       # テクスチャは選択済みと仮定する
-      with MyTimer('draw vertices'):
-        glBegin(GL_QUADS)
-        glTexCoord2f(0, 0); glVertex2f(-1, -1)
-        glTexCoord2f(1, 0); glVertex2f(1, -1)
-        glTexCoord2f(1, 1); glVertex2f(1, 1)
-        glTexCoord2f(0, 1); glVertex2f(-1, 1)
-        glEnd()
+      # VBOは有効と仮定する
+      with MyTimer('glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, indices)'):
+        glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, indices)
 
 
       with MyTimer('rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)'):
