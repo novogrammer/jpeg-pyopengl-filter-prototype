@@ -7,28 +7,37 @@ from PIL import Image,ImageOps
 import pygame
 # from pygame.locals import *
 from OpenGL.GL import *
+from OpenGL.GL import shaders
 # from OpenGL.GLUT import *
 
 from runner import run
-from opengl_utils import load_shader
 
 import os
 import sys
 from my_timer import MyTimer
 
+import numpy as np
+
 
 vertex_code = """
-void main(void) {
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+#version 120
+attribute vec3 position;
+attribute vec2 uv;
+varying vec2 vUv;
+void main() {
+  vUv=uv;
+  gl_Position = vec4( position, 1.0 );
 }
 """
 
 fragment_code = """
+#version 120
+varying vec2 vUv;
 uniform sampler2D texture;
-void main(void) {
-    vec4 color = texture2D(texture, gl_TexCoord[0].st);
-    gl_FragColor = vec4(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
+void main() {
+  vec4 col = texture2D(texture, vUv);
+  gl_FragColor = vec4(1.0 - col.r, 1.0 - col.g, 1.0 - col.b, col.a);
+  // gl_FragColor=vec4(0.0,1.0,0.0,1.0);
 }
 """
 
@@ -37,28 +46,32 @@ IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
 
 
 class FilterInvert():
-  program:GLuint
   texture:GLuint
+  shader_program:shaders.ShaderProgram
+  position_location:GLuint
+  uv_location:GLuint
+  texture_location:GLuint
   def __init__(self):
     with MyTimer('FilterInvert.__init__()'):
       pygame.init()
       pygame.display.set_mode((IMAGE_WIDTH, IMAGE_HEIGHT), pygame.DOUBLEBUF | pygame.OPENGL)
 
-      vertex_shader = load_shader(GL_VERTEX_SHADER, vertex_code)
-      fragment_shader = load_shader(GL_FRAGMENT_SHADER, fragment_code)
+      vertex_shader = shaders.compileShader(vertex_code,GL_VERTEX_SHADER)
+      fragment_shader = shaders.compileShader(fragment_code,GL_FRAGMENT_SHADER)
 
-      self.program = glCreateProgram()
-      glAttachShader(self.program, vertex_shader)
-      glAttachShader(self.program, fragment_shader)
-      glLinkProgram(self.program)
-
-      glDeleteShader(vertex_shader)
-      glDeleteShader(fragment_shader)
+      self.shader_program = shaders.compileProgram(
+        vertex_shader,
+        fragment_shader,
+      )
 
       self.texture = glGenTextures(1)
       glBindTexture(GL_TEXTURE_2D, self.texture)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+      self.position_location = glGetAttribLocation(self.shader_program, 'position')
+      self.uv_location = glGetAttribLocation(self.shader_program, 'uv')
+      self.texture_location = glGetUniformLocation(self.shader_program, 'texture')
 
   def __del__(self):
     pygame.quit()
@@ -84,20 +97,40 @@ class FilterInvert():
       with MyTimer('glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)'):
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_before_data)
 
-      with MyTimer('glUseProgram(self.program)'):
-        glUseProgram(self.program)
-
       # glClearColor(1.0, 0.0, 0.0, 1.0)  # 赤色でクリア
       with MyTimer('glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)'):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-      # テクスチャは選択済みと仮定する
-      with MyTimer('draw vertices'):
-        glBegin(GL_QUADS)
-        glTexCoord2f(0, 0); glVertex2f(-1, -1)
-        glTexCoord2f(1, 0); glVertex2f(1, -1)
-        glTexCoord2f(1, 1); glVertex2f(1, 1)
-        glTexCoord2f(0, 1); glVertex2f(-1, 1)
-        glEnd()
+        with self.shader_program:
+          with MyTimer('draw vertices'):
+            position_array=np.array([
+              [-1.0,-1.0,0.0],
+              [+1.0,-1.0,0.0],
+              [+1.0,+1.0,0.0],
+              [-1.0,+1.0,0.0],
+            ],dtype=np.float32)
+
+
+            uv_array=np.array([
+              [0.0,0.0],
+              [1.0,0.0],
+              [1.0,1.0],
+              [0.0,1.0],
+            ],dtype=np.float32)
+
+            index_array=np.array([
+              0,1,2,
+              0,2,3,
+            ],dtype=np.uint)
+
+            glEnableVertexAttribArray(self.position_location)
+            glVertexAttribPointer(self.position_location,3,GL_FLOAT,False,3*ctypes.sizeof(ctypes.c_float),position_array)
+
+            glEnableVertexAttribArray(self.uv_location)
+            glVertexAttribPointer(self.uv_location,2,GL_FLOAT,False,2*ctypes.sizeof(ctypes.c_float),uv_array)
+
+            glUniform1i(self.texture_location,0)
+            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,index_array)
+
 
 
       with MyTimer('rendered_data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)'):
