@@ -7,6 +7,7 @@ else:
   from OpenGL.GL import *
   from OpenGL.GL import shaders
 
+import numpy as np
 from OpenGL.GLU import *
 import io
 import sys
@@ -46,22 +47,25 @@ def apply_invert_filter(input_jpeg_binary):
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
   
-  vertices=[
-    -1.0,-1.0,0.0,
-    +1.0,-1.0,0.0,
-    +1.0,+1.0,0.0,
-    -1.0,+1.0,0.0,
-  ]
-  uvs=[
-    0.0,0.0,
-    1.0,0.0,
-    1.0,1.0,
-    0.0,1.0,
-  ]
-  indices=[
+  position_array=np.array([
+    [-1.0,-1.0,0.0],
+    [+1.0,-1.0,0.0],
+    [+1.0,+1.0,0.0],
+    [-1.0,+1.0,0.0],
+  ],dtype=np.float32)
+
+
+  uv_array=np.array([
+    [0.0,0.0],
+    [1.0,0.0],
+    [1.0,1.0],
+    [0.0,1.0],
+  ],dtype=np.float32)
+
+  index_array=np.array([
     0,1,2,
     0,2,3,
-  ]
+  ],dtype=np.uint)
 
   # Vertex shader
   vertex_code = """
@@ -83,6 +87,7 @@ def apply_invert_filter(input_jpeg_binary):
     void main() {
       vec4 col = texture2D(texture, vUv);
       gl_FragColor = vec4(1.0 - col.r, 1.0 - col.g, 1.0 - col.b, col.a);
+      // gl_FragColor=vec4(0.0,1.0,0.0,1.0);
     }
   """
   
@@ -116,18 +121,15 @@ def apply_invert_filter(input_jpeg_binary):
   __checkOpenGLError()
 
   with shader_program:
-    
+
     glEnableVertexAttribArray(position_location)
-    __checkOpenGLError()
-    glVertexAttribPointer(position_location,3,GL_FLOAT,False,3*ctypes.sizeof(ctypes.c_float),(ctypes.c_float*len(vertices))(*vertices))
-    __checkOpenGLError()
+    glVertexAttribPointer(position_location,3,GL_FLOAT,False,3*ctypes.sizeof(ctypes.c_float),position_array)
+
     glEnableVertexAttribArray(uv_location)
-    __checkOpenGLError()
-    glVertexAttribPointer(uv_location,2,GL_FLOAT,False,2*ctypes.sizeof(ctypes.c_float),(ctypes.c_float*len(uvs))(*uvs))
-    __checkOpenGLError()
+    glVertexAttribPointer(uv_location,2,GL_FLOAT,False,2*ctypes.sizeof(ctypes.c_float),uv_array)
+
     glUniform1i(texture_location,0)
-    # glDrawArrays(GL_TRIANGLES,0,3)
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,indices)
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,index_array)
     __checkOpenGLError()
   
   # Read the rendered image
