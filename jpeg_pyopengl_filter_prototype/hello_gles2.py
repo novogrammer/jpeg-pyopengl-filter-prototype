@@ -13,6 +13,7 @@ import sys
 from PIL import Image
 
 
+
 def __checkOpenGLError():
   """Print OpenGL error message."""
   err = glGetError()
@@ -57,12 +58,10 @@ def apply_invert_filter(input_jpeg_binary):
     1.0,1.0,
     0.0,1.0,
   ]
-  # vbo_coords=VBO(coords)
   indices=[
     0,1,2,
     0,2,3,
   ]
-  # vbo_indices=VBO(indices)
 
   # Vertex shader
   vertex_code = """
@@ -120,11 +119,11 @@ def apply_invert_filter(input_jpeg_binary):
     
     glEnableVertexAttribArray(position_location)
     __checkOpenGLError()
-    glVertexAttribPointer(position_location,3,GL_FLOAT,False,3*4,vertices)
+    glVertexAttribPointer(position_location,3,GL_FLOAT,False,3*ctypes.sizeof(ctypes.c_float),(ctypes.c_float*len(vertices))(*vertices))
     __checkOpenGLError()
     glEnableVertexAttribArray(uv_location)
     __checkOpenGLError()
-    glVertexAttribPointer(uv_location,2,GL_FLOAT,False,2*4,uvs)
+    glVertexAttribPointer(uv_location,2,GL_FLOAT,False,2*ctypes.sizeof(ctypes.c_float),(ctypes.c_float*len(uvs))(*uvs))
     __checkOpenGLError()
     glUniform1i(texture_location,0)
     # glDrawArrays(GL_TRIANGLES,0,3)
